@@ -1,0 +1,43 @@
+#!/bin/bash
+
+# Check system status in IBM BladeCenter AMM
+
+COLUMN=ibmbcalerts
+
+/home/xymon/server/bin/xymongrep $COLUMN | while read L
+do
+        set $L
+
+        HOSTIP="$1"
+        HOSTNAME="$2"
+
+        ssh -n ibmtech@$HOSTIP health -l a > /home/xymon/server/ext/$HOSTNAME
+
+        if grep 'system: Critical' /home/xymon/server/ext/$HOSTNAME > /dev/null
+        then
+                COLOR=red
+                MSG="$HOSTNAME ($HOSTIP) has critical alerts!
+                `cat /home/xymon/server/ext/$HOSTNAME`
+                "
+        elif grep -E 'system: Warning|system: Non-Critical' /home/xymon/server/ext/$HOSTNAME > /dev/null
+        then
+                COLOR=yellow
+                MSG="$HOSTNAME ($HOSTIP) has warning alerts!
+                `cat /home/xymon/server/ext/$HOSTNAME`
+                "
+
+        else
+                COLOR=green
+                MSG="$HOSTNAME ($HOSTIP) has no alerts :)
+                `cat /home/xymon/server/ext/$HOSTNAME`
+                "
+        fi
+
+        # Display on Xymon
+        $XYMON $XYMSRV "status $HOSTNAME.$COLUMN $COLOR
+        ${MSG}
+        "
+
+done
+
+exit 0

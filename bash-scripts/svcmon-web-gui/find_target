@@ -1,0 +1,17 @@
+#!/bin/bash
+
+cd /var/www/html/svcmon
+
+find /var/www/html/svcmon/ -name $1 -mtime -$2 | sort -nr > temp
+sed -i 's/\/var\/www\/html/http:\/\/192.168.1.1/g' temp
+
+echo "<html>" > result.html
+echo "<body>" >> result.html
+
+for target in `cat temp`
+do
+        echo "<img src=\""$target"\">" >> result.html
+done
+
+echo "</body>" >> result.html
+echo "</html>" >> result.html

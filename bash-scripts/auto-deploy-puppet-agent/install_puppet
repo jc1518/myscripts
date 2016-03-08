@@ -1,0 +1,33 @@
+#!/bin/bash
+# define the variables
+puppet_server=xxxxx
+
+#install puppet			
+echo N\n | sudo apt-get install -y puppet
+
+#start puppet on boot
+sudo puppet resource service puppet ensure=running enable=true
+sudo puppet agent --test
+sudo chmod 666 /etc/default/puppet
+sudo echo START=yes > /etc/default/puppet
+sudo echo DAEMON_OPTS="" >> /etc/default/puppet
+
+#configure the server in the conf file	
+agent=$(hostname | tr '[A-Z]' '[a-z]')
+sudo touch /etc/puppet/puppet.conf
+sudo chmod 666 /etc/puppet/puppet.conf
+sudo echo [main] > /etc/puppet/puppet.conf
+sudo echo server=$puppet_server >> /etc/puppet/puppet.conf
+sudo echo certname=$agent >> /etc/puppet/puppet.conf
+sudo echo logdir=/var/log/puppet >> /etc/puppet/puppet.conf
+sudo echo vardir=/var/lib/puppet >> /etc/puppet/puppet.conf
+sudo echo ssldir=/var/lib/puppet/ssl >> /etc/puppet/puppet.conf
+sudo echo rundir=/var/run/puppet >> /etc/puppet/puppet.conf
+sudo echo factpath=$vardir/lib/facter >> /etc/puppet/puppet.conf
+sudo echo templatedir=$confdir/templates >> /etc/puppet/puppet.conf
+sudo echo prerun_command=/etc/puppet/etckeeper-commit-pre >> /etc/puppet/puppet.conf
+sudo echo postrun_command=/etc/puppet/etckeeper-commit-post >> /etc/puppet/puppet.conf		
+
+#restart puppet
+sudo puppet agent
+

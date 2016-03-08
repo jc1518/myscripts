@@ -1,0 +1,14 @@
+**********************************
+Author: Jackie Chen
+Email: support@jackiechen.org
+**********************************
+
+Script Descriptions:
+
+backup-esxi-host: Schedule daily esxi host backup and email the report.
+
+iislog-archive: Move the IIS log that older than X days to the archive server.
+
+hp-wireless-user: Add wirelss user in HP MSM720 AP.
+
+mssql-db-restore: A example of restoring MSSQL from backup file.

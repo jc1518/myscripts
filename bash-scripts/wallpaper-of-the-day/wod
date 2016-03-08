@@ -1,0 +1,27 @@
+#!/bin/bash
+# define where the photo saved
+gallery=~/Pictures
+
+# temp wallpaper
+gsettings set org.gnome.desktop.background picture-uri ""
+
+# clear cache
+rm -f $gallery/wall.jpg
+rm -f $gallery/photo-of-the-day
+
+# download photo-of-the-day page
+wget http://photography.nationalgeographic.com/photography/photo-of-the-day -O $gallery/photo-of-the-day
+
+# check if there is a high resolution copy
+if grep '1600 x 1200 pixels' $gallery/photo-of-the-day; then
+        url=`cat $gallery/photo-of-the-day | grep '1600 x 1200 pixels' | cut -d'"' -f4`
+else
+        line=` tr '\n' ' ' < $gallery/photo-of-the-day | grep -P -o "<div class=\"primary_photo\">(.*?)</div>"`
+        url=`echo $line | cut -d'"' -f8`
+fi
+
+# download the photo
+wget http:$url -O $gallery/wall.jpg
+
+# set the desktop background
+gsettings set org.gnome.desktop.background picture-uri "file://$gallery/wall.jpg"

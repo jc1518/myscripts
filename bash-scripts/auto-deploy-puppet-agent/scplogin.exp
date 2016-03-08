@@ -1,0 +1,25 @@
+#!/usr/bin/expect -f
+# syntax:
+# ./sshlogin.exp password 192.168.1.11 filename
+
+# set Variables
+set password [lrange $argv 0 0]
+set ipaddr [lrange $argv 1 1]
+set filename [lrange $argv 2 2]
+set timeout -1
+
+# now connect to remote UNIX box (ipaddr) with given script to execute
+spawn scp $filename root@$ipaddr:~/
+match_max 100000
+
+# Look for passwod prompt
+expect "*?assword:*"
+
+# Send password aka $password
+send -- "$password\r"
+
+# send blank line (\r) to make sure we get back to gui
+
+send -- "\r"
+expect eof
+

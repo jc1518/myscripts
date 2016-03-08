@@ -1,0 +1,39 @@
+###############################
+# Intall svcmon in CentOS 6.5 #
+###############################
+
+#!/bin/bash
+
+# Install perl and its modules
+yum -y install perl-5.* perl-Compress-Zlib-* perl-BSD-Resource-* mod_perl-* perl-Digest-SHA1-* perl-Digest-HMAC-* perl-Socket6-* \
+perl-IO-Zlib-* perl-GD-* perl-String-CRC32-* perl-HTML-Parser-* perl-Net-DNS-* perl-Net-SSLeay-* perl-XML-Simple-* \
+perl-HTML-Tagset-* perl-Net-IP-* perl-SGMLSpm-* perl-DBI-* perl-DBD-MySQL-* perl-XML-Parser-* perl-GD-Graph-* \
+perl-IO-Socket-INET6-* newt-perl-* perl-Archive-Tar-* perl-DBD-Pg-* perl-GDTextUtil-* perl-URI-* perl-libwww-perl-* \
+perl-IO-Socket-SSL-* perl-Time-Piece-* perl-GD*
+
+# Install postgresql
+yum -y install postgresql postgresql-server* && service postgresql initdb && service postgresql start && chkconfig postgresql on
+
+# Configure postgresql
+sed -i 's/host/#host/g' /var/lib/pgsql/data/pg_hba.conf
+sed -i 's/local/#local/g' /var/lib/pgsql/data/pg_hba.conf
+echo "local   all         all                               trust" >> /var/lib/pgsql/data/pg_hba.conf
+echo "host    all         all         127.0.0.1/32          trust" >> /var/lib/pgsql/data/pg_hba.conf
+service postgresql restart
+
+# Install XML style transformation library
+yum -y install libxslt-*
+
+# Create working directories
+mkdir /svcmon /svcmon/backup /svcmon/bin /svcmon/config /svcmon/iostats /svcmon/report && chmod 777 /svcmon/report
+
+# Download the svcmon scripts (Written by Yoshimichi Kosuge)
+cd /svcmon/bin && wget "https://www.ibm.com/developerworks/mydeveloperworks/blogs/svcmon/resource/Download/svcmon_V0.8.zip" && unzip * && rm -rf *zip*
+
+# Create svc DB
+perl /svcmon/bin/svcdb.pl --create --dbhost 127.0.0.1 --dbname svcdb --dbuser postgres --dbpwd password
+
+# Replace the admin user with svcmon in the svcperf.pl script
+sed -i 's/admin/svcmon/g' /svcmon/bin/svcperf.pl 
+
+

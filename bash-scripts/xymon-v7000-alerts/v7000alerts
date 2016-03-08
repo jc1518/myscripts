@@ -1,0 +1,35 @@
+#!/bin/bash
+
+# Look for active alerts in V7000
+# You need to create a passwordless user 'svcmon' in V7000 first
+
+COLUMN="v7000alerts"
+
+/home/xymon/server/bin/xymongrep $COLUMN | while read L
+do
+        set $L
+
+        HOSTIP="$1"
+        HOSTNAME="$2"
+
+        ssh -n svcmon@$HOSTIP lseventlog -alert=yes -message=no > /home/xymon/server/ext/$HOSTNAME
+
+        if grep no /home/xymon/server/ext/$HOSTNAME > /dev/null; then
+                COLOR=red
+                MSG="$HOSTNAME ($HOSTIP) has active alerts!
+                `cat /home/xymon/server/ext/$HOSTNAME`
+                "
+        else
+                COLOR=green
+                MSG="$HOSTNAME ($HOSTIP) has no active alerts"
+        fi
+
+        # Display on Xymon
+        $XYMON $XYMSRV "status $HOSTNAME.$COLUMN $COLOR
+        ${MSG}
+        "
+
+done
+
+exit 0
+

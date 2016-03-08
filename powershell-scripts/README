@@ -1,0 +1,9 @@
+**********************************
+Author: Jackie Chen
+Email: support@jackiechen.org
+**********************************
+
+Script Descriptions:
+
+XenApp-Performance: query the real time XenApp farm servers' CPU usage, memory usage and disk queue length.
+

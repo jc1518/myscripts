@@ -1,0 +1,34 @@
+**********************************
+Author: Jackie Chen
+Email: support@jackiechen.org
+**********************************
+
+Script Descriptions:
+
+wallpaper-of-the-day: Download the 'photo of the day' from National Geograhic and set it as the wallpaper.
+
+auto-configure-proxy: Add the script to startup, it will automatically turn on/off the proxy.
+
+ubuntu-encryption-install: Add the disk encryption as part of the OS installation in ubuntu 12.04.2.
+
+auto-deploy-puppet-agent: Deploy the puppet agent to the clients remotely.
+
+install-svcmon: Install svcmon to monitor the IBM V7000 SAN performance.
+
+svcmon-web-gui: svcmon web interface allow user to search the history graphs.
+
+xymon-v7000-alerts: xymon self defined script that monitors active alerts in V7000.
+
+xymon-ibm-bladecenter-status: xymon self defined script that monitor the IBM BladeCenter system status via AMM.
+
+pushcert: Push user's public certificate to remote hosts in a batch.
+
+puppet/update-puppet-tags: Apply the specific tags to a list of servers.
+
+auto-redirect: Change the Apache (mod_rewrite) URL redirect rule, supports 3 types of redirections - one to one, any to one and any to any.
+
+git-proxy: set/unset/show git proxy setting.
+
+find_elb_privat_ip: find the interface name and IP address of the elastic load balancer.
+
+

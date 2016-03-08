@@ -1,0 +1,31 @@
+<html>
+<head>
+<title>Search vdisk or mdisk performance graph </title>
+</head>
+<body>
+<script type="text/javascript">
+</script>
+<div align="center">
+<img src="logo.jpg" alt="logo" /> 
+<p>Type the vdisk or mdisk name <a href="http://192.168.1.1/svcmon/help.html">help</a></p>
+<form method="POST" action="/cgi-bin/process_report.cgi" enctype="multipart/form-data">
+<p><input type="text" name="disk" size="30"></p>
+<select name="perf">
+  <option value="SYD-V7000_cache.hits.vdisk_">SYD-V7000_cache.hits.vdisk</option>
+  <option value="SYD-V7000_cache.stage.vdisk_">SYD-V7000_cache.stage.vdisk</option>
+  <option value="SYD-V7000_cache.throughput.vdisk_">SYD-V7000_cache.throughput.vdisk</option>
+  <option value="SYD-V7000_cache.usage.vdisk_">SYD-V7000_cache.usage.vdisk</option>
+  <option value="SYD-V7000_vdisk.response.worst_">SYD-V7000_vdisk.response.worst</option>
+  <option value="SYD-V7000_vdisk.response.wr_">SYD-V7000_vdisk.response.wr</option>
+  <option value="SYD-V7000_vdisk.throughput_">SYD-V7000_vdisk.throughput</option>
+  <option value="SYD-V7000_vdisk.transaction_">SYD-V7000_vdisk.transaction</option>
+  <option value="SYD-V7000_mdisk.response_">SYD-V7000_mdisk.response</option>
+  <option value="SYD-V7000_mdisk.response.worst.resp_">SYD-V7000_mdisk.response.worst.resp</option>
+  <option value="SYD-V7000_mdisk.throughput_">SYD-V7000_mdisk.throughput</option>
+  <option value="SYD-V7000_mdisk.transaction_">SYD-V7000_mdisk.transaction</option>
+</select>
+<p>In the past <input type="text" name="days" size="2"> days <input type="submit" name="submit" value="search"></p>
+</form>
+</div>
+</body>
+</html>

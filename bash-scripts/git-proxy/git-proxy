@@ -1,0 +1,26 @@
+#!/bin/bash
+
+MYPROXY="http://myproxy.mydomain.com:80"
+
+case $1 in
+  set)
+  # set proxy
+  git config --global http.proxy $MYPROXY
+  git config --global https.proxy $MYPROXY
+  ;;
+  unset)
+  # unset proxy
+  git config --global --unset http.proxy $MYPROXY
+  git config --global --unset https.proxy $MYPROXY
+  ;;
+  show)
+  # Show proxy
+  git config --global --get http.proxy
+  git config --global --get https.proxy
+  ;;
+  *)
+  echo "git-proxy <set|unset|show>"
+  ;;
+esac
+
+

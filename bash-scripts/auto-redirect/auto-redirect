@@ -1,0 +1,229 @@
+#!/bin/bash
+clear
+
+CONFDIR="/etc/httpd/conf/rewrites"
+cd $CONFDIR
+
+SKIPTEST=0
+
+# Usage
+usage() {
+cat << USAGE
+
+Usage: `basename $0` -t <O2O|A2O|A2A> -s <FROM_URL> -d <TO_URL> [-v] [-n]
+	
+	-t	Type of redirection (O2O: one to one, A2O: any to one, A2A: any to any)
+	-s	Source URL
+	-d	Destination URL
+	-n	No test mode
+	-v	Verbose
+	-h	Help 	
+
+USAGE
+}
+
+while getopts 't:s:d:nhv' OPTION
+do
+	case $OPTION in
+		t)
+			TYPE="$OPTARG"
+		 	;;
+		s)	
+			FROM_URL="$OPTARG"
+			;;
+		d)
+			NEW_TO_URL="$OPTARG"
+			;;
+		h)	
+			usage
+			exit 1
+			;;
+		v)	
+			VERBOSE=1
+			;;
+		n)	
+			SKIPTEST=1
+			;;
+		?)	
+			usage
+			exit 1
+			;;
+	esac		 
+done
+
+
+if [ -z "$TYPE" ]; then
+	echo "Redirection type is missing"
+	usage
+	exit 1
+fi
+
+if [ -z "$FROM_URL" ]; then
+	echo "Source URL is missing"
+	usage
+	exit 1
+fi
+
+if [ -z "$NEW_TO_URL" ]; then
+	echo "Destination URL is missing"
+	usage
+	exit 1
+fi
+
+#if [ $# -ne 3 ]; then
+#	usage
+#	exit 0
+#fi
+
+# User input
+#TYPE=$1
+#FROM_URL=$2
+#NEW_TO_URL=$3
+
+DATE=$(/bin/date +%Y-%m-%d-%H:%M)
+
+# Validate the inputs
+
+# Check the current redirection
+
+OLD_TO_URL=$(/bin/curl -s -I $FROM_URL  | grep Location | awk {'print $2'})
+
+# Check the domain in the URL
+DOMAIN=$(echo "$FROM_URL" | cut -d'/' -f3 | cut -d'.' --complement -f1)
+HOST=$(echo "$FROM_URL" | cut -d'/' -f3 )
+
+if [ ! -f "${DOMAIN}.conf" ]; then
+	echo "DOMAIN (${DOMAIN}) DOES NOT EXIST, CREATING IT..."
+
+	# For local test only
+	echo "127.0.0.1	${HOST} ${DOMAIN}" >> /etc/hosts
+	/usr/bin/sed -i "s/${DOMAIN}/${DOMAIN}.test/g" /etc/hosts
+	echo "127.0.0.1	${HOST} ${DOMAIN}" >> /etc/hosts
+
+	/bin/cp template ${DOMAIN}.conf
+	/usr/bin/sed -i "s/SERVER-ALIAS/$HOST/g" ${DOMAIN}.conf
+	/usr/bin/sed -i "s/SERVER-NAME/$DOMAIN/g" ${DOMAIN}.conf
+
+fi
+
+# Create a test conf file for testing
+/bin/cp -f ${DOMAIN}.conf ${DOMAIN}.test.conf
+sed -i "s/$DOMAIN/${DOMAIN}.test/g" ${DOMAIN}.test.conf
+
+# Check the path
+PATH=$(echo "$FROM_URL" | cut -d'/' --complement -f1,2,3)
+
+echo "FROM: $FROM_URL"
+echo "TO (OLD): $OLD_TO_URL"
+echo "TO (NEW): $NEW_TO_URL"
+echo ""
+echo "###############################"
+
+# Translate the PATH 
+case $TYPE in
+	O2O)
+		echo "This is One-to-One redirection"
+		TRANSLATED_PATH=\^\/${PATH}\(\/\)\?\$
+		;;
+	A2O)
+		echo "This is Any-to-One redirection"
+		TRANSLATED_PATH=\^\/${PATH}\(\.\*\)\?\$
+		;;
+
+	A2A)	echo "This is Any-to-Any redirection"
+		TRANSLATED_PATH=\^\/${PATH}\(\.\*\)\?\$
+		NEW_TO_URL=${NEW_TO_URL}'$1'
+		;;
+
+	*) 
+		echo "ERROR - Redirection type only can be O2O, A2O or A2A"
+		usage
+		exit 1
+		;;	
+esac
+
+echo "###############################"
+echo ""
+
+NEW_RULE="ReWriteRule $TRANSLATED_PATH $NEW_TO_URL [R=301,NC,L]"
+
+# Check existing rule
+OLD_RULE=$(/usr/bin/grep -F -i "${TRANSLATED_PATH}" ${DOMAIN}.test.conf | /usr/bin/grep -v "#")
+
+if [ -z "$OLD_RULE" ]; then
+	echo "ADD NEW RULE"
+	LINE=$(($(/usr/bin/grep -n "#RULE-STARTS-HERE" ${DOMAIN}.test.conf | /usr/bin/cut -d":" -f1)+2))
+else
+	echo "REPLACE OLD RULE"
+	LINE=$(/usr/bin/grep -F -i -n "${TRANSLATED_PATH}" ${DOMAIN}.test.conf | /usr/bin/grep -v "#" | /usr/bin/cut -d":" -f1)
+	# Comment out old rule
+	/usr/bin/sed -i "${LINE} s/^/##${DATE}##/" ${DOMAIN}.test.conf
+fi
+
+if [ ! -z $VERBOSE ]; then
+	echo "DOMAIN: $DOMAIN" 
+	echo "PATH: $PATH"
+	echo "TRANSLATED PATH: $TRANSLATED_PATH"
+	echo "LINE: $LINE"
+	echo "OLD RULE: $OLD_RULE"
+	echo "NEW RULE: $NEW_RULE"
+	echo ""
+fi
+
+if [ $SKIPTEST == 0  ]; then
+	# Test the redirection in the test conf
+	# Add new rule in the line and append a empty line
+	/usr/bin/sed -i "${LINE}i${NEW_RULE}" ${DOMAIN}.test.conf
+	/usr/bin/sed -i "${LINE} a\ " ${DOMAIN}.test.conf
+
+	/bin/systemctl reload httpd.service
+
+	echo "PUSHING TO TEST NOW..."
+	/usr/bin/sleep 2
+
+	echo "DEV TEST: $FROM_URL NOW REDIRECTS TO"
+	/bin/curl -s -I http://${HOST}.test/$PATH  | /usr/bin/grep -i Location
+
+	# Rollback or push to production
+	echo ""
+	echo "DOES IT LOOK RIGHT TO YOU? Y|N"
+	read GOLIVE 
+
+	echo ""
+	case $GOLIVE in
+		Y|y)
+			echo "COOL, PUSHING TO PRODUCTION NOW..."
+			;;
+
+		*) 
+			echo "ROLLING BACK..."
+			echo ""
+			/usr/bin/rm -f ${DOMAIN}.test.conf
+			/bin/systemctl reload httpd.service
+			exit 1
+	        	;;
+	esac
+fi
+
+# Apply the change to production
+if [ -z "$OLD_RULE" ]; then
+        #echo "ADD NEW RULE"
+        LINE=$(($(/usr/bin/grep -n "#RULE-STARTS-HERE" ${DOMAIN}.conf | /usr/bin/cut -d":" -f1)+2))
+else
+        #echo "REPLACE OLD RULE"
+        #echo "OLD RULE: $OLD_RULE"
+        LINE=$(/usr/bin/grep -F -i -n "${TRANSLATED_PATH}" ${DOMAIN}.conf | /usr/bin/grep -v "#" | /usr/bin/cut -d":" -f1)
+        # Comment out old rule
+        /usr/bin/sed -i "${LINE} s/^/##${DATE}##/" ${DOMAIN}.conf
+fi
+
+# Add new rule in the line and append a empty line
+/usr/bin/sed -i "${LINE}i${NEW_RULE}" ${DOMAIN}.conf
+/usr/bin/sed -i "${LINE} a\ " ${DOMAIN}.conf
+
+/bin/systemctl reload httpd.service
+
+/usr/bin/sleep 2
+
+echo "PROD TEST: $FROM_URL NOW REDIRECTS TO "
+/bin/curl -s -I $FROM_URL  | /usr/bin/grep -i Location 

@@ -1,0 +1,2 @@
+esxi-host-01.company.com
+esxi-host-02.company.com

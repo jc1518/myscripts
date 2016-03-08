@@ -1,0 +1,44 @@
+#!/bin/bash
+# auto turn on/off proxy
+# define the proxy server and port
+proxy_server=proxy-server-name
+proxy_port=8080
+
+# wait for the network ready
+ip_eth0=`ifconfig eth0 | grep 'inet addr' | cut -d':' -f2 | cut -d' ' -f1`
+ip_wlan0=`ifconfig wlan0 | grep 'inet addr' | cut -d':' -f2 | cut -d' ' -f1`
+
+while [[ $ip_eth0 == "" && $ip_wlan0 == "" ]]
+do
+	echo ip_eth0 is $ip_eth0, ip_wlan0 is $ip_wlan0
+	sleep 1
+	ip_eth0=`ifconfig eth0 | grep 'inet addr' | cut -d':' -f2 | cut -d' ' -f1`
+	ip_wlan0=`ifconfig wlan0 | grep 'inet addr' | cut -d':' -f2 | cut -d' ' -f1`
+done
+
+# check the connectivity to proxy server
+ping_test=`ping -c 2 $proxy_server | grep bytes | wc -l` 
+
+if [ "$ping_test" -gt 1 ]; then
+	# turn on proxy
+	echo turning on proxy...
+	gsettings set org.gnome.system.proxy mode 'manual'
+	gsettings set org.gnome.system.proxy.http host $proxy_server
+	gsettings set org.gnome.system.proxy.http port $proxy_port
+	gsettings set org.gnome.system.proxy.https host $proxy_server
+	gsettings set org.gnome.system.proxy.https port $proxy_port
+	gsettings set org.gnome.system.proxy.socks host $proxy_server
+	gsettings set org.gnome.system.proxy.socks port $proxy_port
+	gsettings set org.gnome.system.proxy.ftp host $proxy_server
+	gsettings set org.gnome.system.proxy.ftp port $proxy_port
+
+	echo "Acquire::http::proxy \"http://$proxy_server:$proxy_port/\";" > /etc/apt/apt.conf
+	echo "Acquire::https::proxy \"https://$proxy_server:$proxy_port/\";" >> /etc/apt/apt.conf
+	echo "Acquire::ftp::proxy \"ftp://$proxy_server:$proxy_port/\";" >> /etc/apt/apt.conf
+	echo "Acquire::socks::proxy \"socks://$proxy_server:$proxy_port/\";" >> /etc/apt/apt.conf
+else
+	# turn off proxy
+	echo turning off proxy...
+	gsettings set org.gnome.system.proxy mode 'none'
+	echo > /etc/apt/apt.conf
+fi

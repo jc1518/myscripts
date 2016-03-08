@@ -1,0 +1,14 @@
+<virtualhost SERVER-ALIAS:80>
+	ServerAdmin support@jackiechen.org
+        ServerName SERVER-NAME
+        ServerAlias SERVER-ALIAS
+        DirectoryIndex index.html index.htm index.shtml
+
+RewriteEngine On
+LogLevel warn rewrite:trace3
+
+#RULE-STARTS-HERE
+
+
+</virtualhost>
+

@@ -1,0 +1,29 @@
+#!/bin/bash
+# define the ssh password
+ssh_pwd=******
+
+# check if IP pingable
+for ip in $(cat IP.list) 
+do
+	if  ping -c 4 $ip > /dev/null 2>&1
+	then
+		echo $ip 'is pingable'
+		# check /etc/puppet exisitence
+		if ./sshlogin.exp $ssh_pwd $ip ls /etc | grep puppet > /dev/null 2>&1
+		then 
+			echo 'Puppet is already installed on' $ip
+		else
+			# copy install script to remote host		
+			./scplogin.exp $ssh_pwd $ip install_puppet 
+			# install puppet on remote host
+			./sshlogin.exp $ssh_pwd $ip /root/install_puppet
+			echo $ip >> IP.success
+		fi
+
+	else
+		echo $ip 'is NOT pingable'
+		echo $ip >> IP.not_pingable
+
+	fi
+done
+
