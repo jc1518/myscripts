@@ -1,0 +1,340 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+
+    "Description": "Single EC2 instance",
+
+    "Outputs": {
+        "InstanceID": {
+            "Description": "ID of the Single EC2 instance",
+            "Value": {
+                "Ref": "SInstance"
+            }
+        }
+    },
+
+    "Parameters": {
+        "ClusterName": {
+            "Description": "Cluster name of the ES.",
+            "Type": "String"
+        },
+        "NodeName": {
+            "Description": "Name of ES node.",
+            "Type": "String"
+        },
+        "NodeData": {
+            "Description": "true if it is data node.",
+            "Type": "String"
+        },
+        "NodeMaster": {
+            "Description": "true if it is master node.",
+            "Type": "String"
+        },
+        "MarvelAgent": {
+            "Description": "true to enable marvel.",
+            "Type": "String"
+        },
+        "HeapSize": {
+            "Description": "Heap size of the ES node.",
+            "Type": "String"
+        },
+        "AccessKey": {
+            "Description": "Access key for aws plugin.",
+            "Type": "String"
+        },
+        "SecretKey": {
+            "Description": "Secret key for aws plugin.",
+            "Type": "String"
+        },
+        "InstanceType": {
+            "Description": "EC2 instance type",
+            "Type": "String"
+        },
+        "Branch": {
+            "Description": "Git branch",
+            "Type": "String"
+        },
+        "BuildNumber": {
+            "Description": "Bamboo build number",
+            "Type": "String"
+        },
+        "Release": {
+            "Description" : "Release identifier",
+            "Type" : "String"
+        },
+        "CreateResource": {
+            "Default": "true",
+            "Type": "String"
+        },
+		"ImageId": {
+            "Default": "ami-0529673f",
+            "Description": "AMI ID to launch",
+            "Type": "String"
+		},
+        "KeyName": {
+            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+            "Type": "String"
+        },
+        "NetworkSecurityEnv": {
+            "Default": "dev",
+            "Description": "Network & Security environmet",
+            "Type": "String"
+        },
+        "Product": {
+            "Description": "Tag for Product",
+            "Type": "String"
+        },
+        "Application": {
+            "Description": "Tag for Application",
+            "Type": "String"
+        },
+        "Subnet": {
+            "Description": "where the instance is located",
+            "Type": "String"
+        },
+        "SecurityGroup": {
+            "Description": "Security group for the instance",
+            "Type": "List<AWS::EC2::SecurityGroup::Id>"
+        },
+        "HostedZone": {
+            "Description": "DNS zone for builds",
+            "Type": "String"
+        },
+        "TagBusinessUnit": {
+            "Description": "Tag for Business Unit",
+            "Type": "String"
+        },
+        "TagCostCenter": {
+            "Description": "Tag for cost center ID",
+            "Type": "String"
+        },
+        "TagOwner": {
+            "Description": "Tag for Owner",
+            "Type": "String"
+        }
+    },
+
+    "Resources": {
+		"DNSRecord": {
+			"Properties":{
+				"HostedZoneName": {
+					"Fn::Join": [
+						"",
+						[
+							{
+								"Ref": "HostedZone"
+							},
+							"."
+						]
+					]
+				},
+				"Name": {
+					"Fn::Join": [
+						"",
+						[
+							{
+								"Ref": "ClusterName"
+							},
+							"-",
+							{
+								"Ref": "NodeName"
+							},
+							".",
+							{
+								"Ref": "HostedZone"
+							},
+							"."
+						]
+					]
+				},
+				"ResourceRecords": [
+					{
+						"Fn::GetAtt": [
+							"SInstance",
+							"PrivateIp"
+						]
+					}
+				],
+				"TTL": "300",
+				"Type": "A"
+			},
+			"Type": "AWS::Route53::RecordSet"
+		},
+
+        "SInstance": {
+            "Properties": {
+                "IamInstanceProfile": "aws-elasticsearch-role",
+                "ImageId": {
+                    "Ref": "ImageId"
+                },
+				"BlockDeviceMappings":[
+					{
+						"DeviceName": "/dev/xvda",
+						"Ebs": {"VolumeSize": "320"}
+					}
+				],
+                "InstanceType": {
+					"Ref": "InstanceType"
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+				"SecurityGroupIds": {
+					"Ref": "SecurityGroup"
+				},
+                "SubnetId": {
+                    "Ref": "Subnet"
+                },
+				"Tags": [
+					{
+						"Key": "Name",
+						"Value": {
+							"Fn::Join": [
+                                "",
+								[
+									{
+                                        "Ref": "ClusterName"
+									},
+									"-",
+									{
+                                        "Ref": "NodeName"
+									}
+								]
+							]
+						}
+					},
+					{
+                        "Key": "Cluster",
+						"Value": {
+                            "Ref": "ClusterName"
+						}
+					},
+					{
+                        "Key": "Node",
+						"Value": {
+                            "Ref": "NodeName"
+						}
+					},
+					{
+                        "Key": "Bu",
+						"Value": {
+                            "Ref": "TagBusinessUnit"
+						}
+					},
+					{
+                        "Key": "Cc",
+						"Value": {
+                            "Ref": "TagCostCenter"
+						}
+					},
+					{
+                        "Key": "Environment",
+						"Value": {
+                            "Ref": "NetworkSecurityEnv"
+						}
+					},
+					{
+                        "Key": "Owner",
+						"Value": {
+                            "Ref": "TagOwner"
+						}
+					},
+					{
+                        "Key": "Product",
+						"Value": {
+                            "Ref": "Product"
+						}
+					}
+				],
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -ex\n",
+                                "sed -i 's/%CLUSTERNAME%/",
+                                {
+                                    "Ref": "ClusterName"
+                                },
+                                "/g' /etc/elasticsearch/elasticsearch.yml\n",
+                                "sed -i 's/%NODENAME%/",
+                                {
+                                    "Ref": "NodeName"
+                                },
+                                "/g' /etc/elasticsearch/elasticsearch.yml\n",
+                                "sed -i 's/%NODEDATA%/",
+                                {
+                                    "Ref": "NodeData"
+                                },
+                                "/g' /etc/elasticsearch/elasticsearch.yml\n",
+                                "sed -i 's/%NODEMASTER%/",
+                                {
+                                    "Ref": "NodeMaster"
+                                },
+                                "/g' /etc/elasticsearch/elasticsearch.yml\n",
+                                "sed -i 's/%ACCESSKEY%/",
+                                {
+                                    "Ref": "AccessKey"
+                                },
+                                "/g' /etc/elasticsearch/elasticsearch.yml\n",
+                                "sed -i 's/%SECRETKEY%/",
+                                {
+                                    "Ref": "SecretKey"
+                                },
+                                "/g' /etc/elasticsearch/elasticsearch.yml\n",
+                                "sed -i 's/%MARVELAGENT%/",
+                                {
+                                    "Ref": "MarvelAgent"
+                                },
+                                "/g' /etc/elasticsearch/elasticsearch.yml\n",
+                                "sed -i 's/%NETWORKSECURITYENV%/",
+                                {
+                                    "Ref": "NetworkSecurityEnv"
+                                },
+                                "/g' /etc/elasticsearch/elasticsearch.yml\n",
+                                "sed -i 's/%HEAPSIZE%/",
+                                {
+                                    "Ref": "HeapSize"
+                                },
+                                "/g' /etc/sysconfig/elasticsearch\n",
+                                "sed -i 's/%NETWORKSECURITYENV%/",
+                                {
+                                    "Ref": "NetworkSecurityEnv"
+                                },
+                                "/g' /etc/profile\n",
+                                "sed -i 's/%NETWORKSECURITYENV%/",
+                                {
+                                    "Ref": "NetworkSecurityEnv"
+                                },
+                                "/g' /etc/wgetrc\n",
+                                "sed -i 's/%NETWORKSECURITYENV%/",
+                                {
+                                    "Ref": "NetworkSecurityEnv"
+                                },
+                                "/g' /etc/yum.conf\n",
+                                "sed -i 's/%NETWORKSECURITYENV%/",
+                                {
+                                    "Ref": "NetworkSecurityEnv"
+                                },
+                                "/g' /opt/SumoCollector/config/wrapper.conf\n",
+                                "echo \"export NetworkSecurityEnv=",
+                                {
+                                    "Ref": "NetworkSecurityEnv"
+                                },
+                                "\" >> /home/ec2-user/app/envvars\n",
+                                "echo \"export Release=",
+                                {
+                                    "Ref": "Release"
+                                },
+                                "\" >> /home/ec2-user/app/envvars\n",
+                                "chown -R ec2-user:ec2-user /home/ec2-user\n",
+                                "chmod +x /home/ec2-user/app/deploy/scripts/*.sh; /home/ec2-user/app/deploy/scripts/firstrun.sh\n",
+                                "$CFNDIR/cfn-signal -e 0\n"
+                            ]
+                        ]
+                    }
+                }
+			},
+            "Type": "AWS::EC2::Instance"
+		}
+	}
+}

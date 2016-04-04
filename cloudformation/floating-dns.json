@@ -1,0 +1,99 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "AWS CloudFormation Template For Floating DNS record",
+    "Parameters": {
+        "Application": {
+            "Description": "The application.",
+            "Type": "String"
+        },
+        "Product": {
+            "Description": "The product.",
+            "Type": "String"
+        },
+        "Release": {
+            "Description": "Unique release identifier for the assets to avoid collision.",
+            "Type": "String"
+        },
+        "HostedZone": {
+            "Description": "Route53 hosted zone.",
+            "Type": "String"
+        },
+        "MasterHostedZone": {
+            "Descritption": "Route53 master hosted zone",
+            "Type": "String"
+        },
+        "NetworkSecurityEnv" : {
+            "Type" : "String",
+            "Description" : "Network Security Environment"
+        }
+    },
+    "Resources": {
+        "Route53DNSRecord": {
+            "Properties": {
+                "Comment": "Floating DNS Record",
+                "HostedZoneName": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            {
+                                "Ref": "MasterHostedZone"
+                            },
+                            "."
+                        ]
+                    ]
+                },
+                "Name": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            {
+                                "Ref": "NetworkSecurityEnv"
+                            },
+                            ".",
+                            {
+                                "Ref": "Application"
+                            },
+                            ".",
+                            {
+                                "Ref": "MasterHostedZone"
+                            },
+                            "."
+                        ]
+                    ]
+                },
+                "ResourceRecords": [
+                    {
+                      "Fn::Join": [
+                          "",
+                          [
+                              {
+                                  "Ref": "Application"
+                              },
+                              "-",
+                              {
+                                  "Ref": "Product"
+                              },
+							                "-",
+                              {
+                                  "Ref": "NetworkSecurityEnv"
+                              },
+                              "-",
+                              {
+                                  "Ref": "Release"
+                              },
+                              ".",
+                              {
+                                  "Ref" : "HostedZone"
+                              },
+                              "."
+                          ]
+                      ]
+                    }
+                ],
+                "TTL": "60",
+                "Type": "CNAME"
+            },
+            "Type": "AWS::Route53::RecordSet"
+        }
+    }
+}

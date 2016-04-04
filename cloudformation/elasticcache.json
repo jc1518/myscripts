@@ -1,0 +1,70 @@
+{
+  "AWSTemplateFormatVersion" : "2010-09-09",
+
+  "Description" : "AWS CloudFormation for ElasticCache.",
+
+	"Parameters" : {
+		"ClusterName" : {
+      "Description" : "ClusterName",
+      "Type" : "String"
+		},
+		"Engine" : {
+      "Description" : "Engine mysql or redis",
+      "Type" : "String",
+			"Default": "redis"
+		},
+		"EngineVersion" : {
+      "Description" : "Engine version of mysql or redis",
+      "Type" : "String",
+			"Default": "2.8.21"
+		},
+		"CacheNodeType" : {
+      "Default" : "cache.m1.small",
+      "Description" : "The compute and memory capacity of the nodes in the Cache Cluster",
+      "Type" : "String"
+		},
+		"CacheSubnetGroupName" : {
+      "Default" : "default",
+      "Description" : "Cache subnet group",
+      "Type" : "String"
+		},
+		"CacheParameterGroupName" : {
+      "Default" : "default.redis2.8",
+      "Description" : "Cache parameter group name",
+      "Type" : "String"
+		},
+		"NumberOfCacheNodes" : {
+      "Description" : "The number of Cache Nodes the Cache Cluster should have",
+      "Type": "Number",
+      "Default": "1"
+		},
+		"VpcSecurityGroupIds" : {
+      "Description" : "VPC security groups",
+      "Type": "List<AWS::EC2::SecurityGroup::Id>"
+		},
+		"MaintenanceWindow" : {
+      "Description" : "Maintenance windows",
+      "Type": "String",
+      "Default": "mon:12:00-mon:13:00"
+		}
+	},
+
+  "Resources" : {
+
+		"CacheCluster" : {
+      "Type": "AWS::ElastiCache::CacheCluster",
+			"Properties": {
+				"AutoMinorVersionUpgrade" : "false",
+				"CacheParameterGroupName" : {	"Ref"	: "CacheParameterGroupName"},
+				"ClusterName"							: { "Ref" : "ClusterName" },
+        "CacheNodeType"           : { "Ref" : "CacheNodeType"  },
+				"CacheSubnetGroupName"		: {	"Ref"	: "CacheSubnetGroupName"},
+        "Engine"                  : { "Ref" : "Engine" },
+        "EngineVersion"           : { "Ref" : "EngineVersion" },
+        "NumCacheNodes"           : { "Ref" : "NumberOfCacheNodes"  },
+				"VpcSecurityGroupIds"			: {	"Ref"	: "VpcSecurityGroupIds"},
+				"PreferredMaintenanceWindow"	: {	"Ref"	: "MaintenanceWindow"}
+			}
+		}
+	}
+}

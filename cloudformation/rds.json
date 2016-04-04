@@ -1,0 +1,336 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "AWS CloudFormation RDS Template for MySQL",
+  "Parameters": {
+    "EndPointName": {
+      "Description": "The RDS Endpoint Name",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "16"
+    },
+    "PreferredMaintenanceWindow": {
+      "Description": "Maintenance window",
+      "Type": "String",
+      "Default": "fri:12:56-fri:13:26"
+    },
+    "DBParameterGroupName": {
+      "Description": "DB param group",
+      "Type": "String",
+      "Default": "default"
+    },
+    "EC2SubnetAZa": {
+      "Description": "Select the subnet for Availability Zone A",
+      "Type": "AWS::EC2::Subnet::Id",
+      "Default": "subnet-04941561"
+    },
+    "EC2SubnetAZb": {
+      "Description": "Select the subnet for Availability Zone B",
+      "Type": "AWS::EC2::Subnet::Id",
+      "Default": "subnet-69319e1e"
+    },
+    "DBName": {
+      "Description": "The database name",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "64",
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+      "ConstraintDescription": "Must begin with a letter and contain only alphanumeric characters."
+    },
+    "DBUser": {
+      "Description": "The database admin account username",
+      "Type": "String",
+      "MinLength": "1",
+      "MaxLength": "16",
+      "AllowedPattern": "[a-zA-Z][a-zA-Z0-9]*",
+      "ConstraintDescription": "Must begin with a letter and contain only alphanumeric characters."
+    },
+    "DBPassword": {
+      "NoEcho": "true",
+      "Description": "The database admin account password",
+      "Type": "String",
+      "MinLength": "8",
+      "MaxLength": "41"
+    },
+    "DBAllocatedStorage": {
+      "Description": "The size of the database (Gb)",
+      "Type": "Number",
+      "MinValue": "5",
+      "MaxValue": "1024",
+      "ConstraintDescription": "Must be between 5 and 1024Gb."
+    },
+    "DBPort": {
+      "Description": "DB listening port",
+      "Type": "Number",
+      "MinValue": "1150",
+      "MaxValue": "65535",
+      "Default": "3306",
+      "ConstraintDescription": "Must be between 3300 and 3400"
+    },
+    "DBBackupRetention": {
+      "Description": "The No. of Days to keep backup",
+      "Type": "Number",
+      "MinValue": "0",
+      "MaxValue": "7",
+      "Default": "1",
+      "ConstraintDescription": "Must be between 0 and 7"
+    },
+    "DBInstanceClass": {
+      "Description": "The database instance type",
+      "Type": "String",
+      "AllowedValues": [
+        "db.t1.micro",
+        "db.t2.micro",
+        "db.t2.small",
+        "db.t2.medium",
+        "db.m1.small",
+        "db.m1.medium",
+        "db.m1.large",
+        "db.m1.xlarge",
+        "db.m2.xlarge",
+        "db.m2.2xlarge",
+        "db.m2.4xlarge",
+        "db.m3.medium",
+        "db.m3.large",
+        "db.m3.xlarge",
+        "db.m3.2xlarge",
+        "db.r3.large",
+        "db.r3.xlarge",
+        "db.r3.2xlarge",
+        "db.r3.4xlarge",
+        "db.r3.8xlarge",
+        "db.m2.xlarge",
+        "db.m2.2xlarge",
+        "db.m2.4xlarge",
+        "db.cr1.8xlarge"
+      ],
+      "ConstraintDescription": "Must select a valid database instance type."
+    },
+    "PubliclyAccessible": {
+      "Description": "Create a Publically Accessible RDS database instance",
+      "Type": "String",
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "ConstraintDescription": "Must be either true or false."
+    },
+    "MultiAZ": {
+      "Description": "Create a multi-AZ RDS database instance",
+      "Type": "String",
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "ConstraintDescription": "Must be either true or false."
+    },
+    "MinorUpgrade": {
+      "Default": "true",
+      "Description": "Minor upgrade engines applied",
+      "Type": "String",
+      "AllowedValues": [
+        "true",
+        "false"
+      ],
+      "ConstraintDescription": "Must be either true or false."
+    },
+    "Environment": {
+      "Description": "Tag for environment.",
+      "Type": "String"
+    },
+    "Product": {
+      "Description": "Tag for product.",
+      "Type": "String"
+    },
+    "Application": {
+      "Description": "Tag for application.",
+      "Type": "String"
+    },
+		"TagBusinessUnit": {
+            "Description": "Tag for Business Unit",
+            "Type": "String"
+		},
+		"TagCostCenter": {
+            "Description": "Tag for cost center ID",
+            "Type": "String"
+		},
+		"TagOwner": {
+            "Description": "Tag for Owner",
+            "Type": "String"
+
+		},
+    "RDSDBEngine": {
+      "Description": "The name of the database engine to use for this instance",
+      "Type": "String",
+      "Default": "mysql"
+    },
+    "RDSDBEngineVer": {
+      "Description": "The version number of the database engine",
+      "Type": "String",
+      "Default": "5.5.40"
+    },
+    "VPCSecurityGroups": {
+      "Description": "Security group for db",
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "AWSRDSDBSubnetGroup": {
+      "Type": "AWS::RDS::DBSubnetGroup",
+      "Properties": {
+        "DBSubnetGroupDescription": "RDS DB Subnet Group",
+        "SubnetIds": [
+          {
+            "Ref": "EC2SubnetAZa"
+          },
+          {
+            "Ref": "EC2SubnetAZb"
+          }
+        ]
+      }
+    },
+    "MyDB": {
+      "Type": "AWS::RDS::DBInstance",
+      "Properties": {
+        "PreferredMaintenanceWindow": {
+          "Ref": "PreferredMaintenanceWindow"
+        },
+        "DBParameterGroupName": {
+          "Ref": "DBParameterGroupName"
+        },
+        "Engine": {
+          "Ref": "RDSDBEngine"
+        },
+        "EngineVersion": {
+          "Ref": "RDSDBEngineVer"
+        },
+        "DBInstanceClass": {
+          "Ref": "DBInstanceClass"
+        },
+        "MultiAZ": {
+          "Ref": "MultiAZ"
+        },
+        "AllocatedStorage": {
+          "Ref": "DBAllocatedStorage"
+        },
+        "DBInstanceIdentifier": {
+          "Ref": "EndPointName"
+        },
+        "DBName": {
+          "Ref": "DBName"
+        },
+        "Port": {
+          "Ref": "DBPort"
+        },
+        "MasterUsername": {
+          "Ref": "DBUser"
+        },
+        "MasterUserPassword": {
+          "Ref": "DBPassword"
+        },
+        "VPCSecurityGroups": [
+          {
+            "Ref": "VPCSecurityGroups"
+          }
+        ],
+        "DBSubnetGroupName": {
+          "Ref": "AWSRDSDBSubnetGroup"
+        },
+        "PubliclyAccessible": {
+          "Ref": "PubliclyAccessible"
+        },
+        "BackupRetentionPeriod": {
+          "Ref": "DBBackupRetention"
+        },
+        "AutoMinorVersionUpgrade": {
+          "Ref": "MinorUpgrade"
+        },
+        "Tags": [
+          {
+            "Key": "BU",
+            "Value": {
+              "Ref": "TagBusinessUnit"
+            }
+          },
+          {
+            "Key": "Owner",
+            "Value": {
+              "Ref": "TagOwner"
+            }
+          },
+          {
+            "Key": "Cc",
+            "Value": {
+              "Ref": "TagCostCenter"
+            }
+          },
+          {
+            "Key": "Environment",
+            "Value": {
+              "Ref": "Environment"
+            }
+          },
+          {
+            "Key": "Product",
+            "Value": {
+              "Ref": "Product"
+            }
+          },
+          {
+            "Key": "Application",
+            "Value": {
+              "Ref": "Application"
+            }
+          }
+        ]
+      }
+		}
+	},
+  "Outputs": {
+    "JDBCConnectionString": {
+      "Description": "JDBC connection string for database",
+      "Value": {
+        "Fn::Join": [
+          "",
+          [
+            "jdbc:mysql://",
+            {
+              "Fn::GetAtt": [
+                "MyDB",
+                "Endpoint.Address"
+              ]
+            },
+            ":",
+            {
+              "Fn::GetAtt": [
+                "MyDB",
+                "Endpoint.Port"
+              ]
+            },
+            "/",
+            {
+              "Ref": "DBName"
+            }
+          ]
+        ]
+      }
+    },
+    "DBAddress": {
+      "Description": "Address of database endpoint",
+      "Value": {
+        "Fn::GetAtt": [
+          "MyDB",
+          "Endpoint.Address"
+        ]
+      }
+    },
+    "DBPort": {
+      "Description": "Database endpoint port number",
+      "Value": {
+        "Fn::GetAtt": [
+          "MyDB",
+          "Endpoint.Port"
+        ]
+      }
+    }
+  }
+}

@@ -1,0 +1,892 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+    "Description": "Autoscale group",
+    "Mappings": {
+        "ELBSecurityGroup": {
+            "dev": {
+                "back": [
+					"sg-a5c63ec1"
+                ],
+                "front": [
+					"sg-a5c63ec1"
+                ]
+            },
+            "uat": {
+                "back": [
+                    "sg-a5c63ec1"
+                ],
+                "front": [
+                    "sg-a5c63ec1"
+                ]
+            },
+            "sit": {
+                "back": [
+					"sg-a5c63ec1"
+                ],
+                "front": [
+					"sg-a5c63ec1"
+                ]
+            },
+            "sit2": {
+                "back": [
+					"sg-a5c63ec1"
+                ],
+                "front": [
+					"sg-a5c63ec1"
+                ]
+            },
+            "prod": {
+                "back": [
+                    "sg-a5c63ec1"
+                ],
+                "front": [
+                    "sg-a5c63ec1"
+                ]
+            }
+        },
+        "ELBSubnet": {
+            "dev": {
+                "back": [
+					"subnet-f1128698",
+					"subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            },
+            "uat": {
+                "back": [
+					"subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            },
+            "sit": {
+                "back": [
+					"subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            },
+            "sit2": {
+                "back": [
+					"subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            },
+            "prod": {
+                "back": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            }
+        },
+        "InstanceSecurityGroup": {
+            "dev": {
+                "back": [
+					"sg-7638c012"
+                ],
+                "front": [
+					"sg-7638c012"
+                ]
+            },
+            "uat": {
+                "back": [
+                    "sg-7638c012"
+                ],
+                "front": [
+                    "sg-7638c012"
+                ]
+            },
+            "sit": {
+                "back": [
+                    "sg-7638c012"
+                ],
+                "front": [
+                    "sg-7638c012"
+                ]
+            },
+            "sit2": {
+                "back": [
+                    "sg-7638c012"
+                ],
+                "front": [
+                    "sg-7638c012"
+                ]
+            },
+            "prod": {
+                "back": [
+                    "sg-7638c012"
+                ],
+                "front": [
+                    "sg-7638c012"
+                ]
+            }
+        },
+        "InstanceSubnet": {
+            "dev": {
+                "back": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            },
+            "uat": {
+                "back": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            },
+            "sit": {
+                "back": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            },
+            "sit2": {
+                "back": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            },
+            "prod": {
+                "back": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ],
+                "front": [
+                    "subnet-f1128698",
+                    "subnet-f0128699",
+                    "subnet-55abfe13"
+                ]
+            }
+        },
+        "ResourceSize": {
+            "Instance": {
+                "dev" : "m3.medium",
+                "uat": "m3.medium",
+                "sit": "m3.medium",
+                "sit2": "m3.medium",
+                "prod" : "m3.medium"
+            }
+        },
+        "SNSEndpoint": {
+            "OperationalAlerts": {
+                "dev": "arn:aws:sns:ap-southeast-2:xxxxxxxxxx:myteam",
+                "uat": "arn:aws:sns:ap-southeast-2:xxxxxxxxxx:myteam",
+                "sit": "arn:aws:sns:ap-southeast-2:xxxxxxxxxx:myteam",
+                "sit2": "arn:aws:sns:ap-southeast-2:xxxxxxxxxx:myteam",
+                "prod": "arn:aws:sns:ap-southeast-2:xxxxxxxxxx:myteam"
+            }
+        },
+        "ScaleCapacity": {
+            "MaxSize": {
+                "dev": "2",
+                "uat": "2",
+                "sit": "2",
+                "sit2": "1",
+                "prod": "4"
+            },
+            "MinSize": {
+                "dev": "2",
+                "uat": "2",
+                "sit": "2",
+                "sit2": "1",
+                "prod": "2"
+            }
+        }
+    },
+    "Outputs": {
+        "AutoscaleDNS": {
+            "Description": "DNS for the autoscaled application",
+            "Value": {
+                "Ref": "DNSRecord"
+            }
+        },
+        "AutoscaleID": {
+            "Description": "ID of the autoscaled group",
+            "Value": {
+                "Ref": "AutoScaleGroup"
+            }
+        },
+        "ELB": {
+            "Description": "ELB ID",
+            "Value": {
+                "Ref": "ElasticLoadBalancer"
+            }
+        }
+    },
+    "Parameters": {
+        "AlertARN": {
+            "Description": "ARN of the SNS list to publish critical scale alerts",
+            "Type": "String"
+        },
+        "Application": {
+            "Description": "Name of application for naming and DNS.",
+            "Type": "String"
+        },
+        "ASGHealthCheckGracePeriod": {
+          "Default": "300",
+          "Type": "String"
+        },
+        "Branch": {
+            "Description": "Git branch",
+            "Type": "String"
+        },
+        "BuildNumber": {
+            "Description": "Bamboo build number",
+            "Type": "String"
+        },
+        "Release": {
+            "Description" : "Release identifier",
+            "Type" : "String"
+        },
+        "CreateResource": {
+            "Default": "true",
+            "Type": "String"
+        },
+        "ELBHealthyThreshold": {
+            "Default": "5",
+            "Description": "Specifies the number of consecutive health probe successes required before moving the instance to the Healthy state.",
+            "Type": "String"
+        },
+        "ELBInstancePort": {
+            "Default": "80",
+            "Description": "Specifies the TCP port on which the instance server is listening.",
+            "Type": "String"
+        },
+        "ELBInterval": {
+            "Default": "30",
+            "Description": "Specifies the approximate interval, in seconds, between health checks of an individual instance.",
+            "Type": "String"
+        },
+        "ELBLoadBalancerPort": {
+            "Default": "80",
+            "Description": "Specifies the external load balancer port number.",
+            "Type": "String"
+        },
+        "ELBProtocol": {
+            "Default": "HTTP",
+            "Description": "Specifies the load balancer transport protocol to use for routing \u2014 HTTP, HTTPS, TCP or SSL.",
+            "Type": "String"
+        },
+        "ELBTarget": {
+            "Default": "TCP:80",
+            "Description": "Specifies the instance being checked. The protocol is either TCP or HTTP. The range of valid ports is 1 through 65535.",
+            "Type": "String"
+        },
+        "ELBTimeout": {
+            "Default": "5",
+            "Description": "Specifies the amount of time, in seconds, during which no response means a failed health probe. This value must be less than the value for Interval.",
+            "Type": "String"
+        },
+        "ELBUnhealthyThreshold": {
+            "Default": "2",
+            "Description": "Specifies the number of consecutive health probe failures required before moving the instance to the Unhealthy state.",
+            "Type": "String"
+        },
+        "HostedZone": {
+            "Description": "Route53 hosted zone.",
+            "Type": "String"
+        },
+        "ImageId": {
+            "Description": "AMI ID to launch",
+            "Type": "String"
+        },
+        "KeyName": {
+            "Description": "Name of an existing EC2 KeyPair to enable SSH access to the instances",
+            "Type": "String"
+        },
+        "MetricName": {
+            "Default": "CPUUtilization",
+            "Description": "The name for the alarm's associated metric.",
+            "Type": "String"
+        },
+        "NetworkSecurityEnv": {
+            "Description": "Network & Security environmet",
+            "Type": "String"
+        },
+        "Product": {
+            "Description": "Tag for Product",
+            "Type": "String"
+        },
+        "ScaleDownCooldown": {
+            "Default": "300",
+            "Description": "The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start.",
+            "Type": "String"
+        },
+        "ScaleDownEvaluationPeriods": {
+            "Default": "4",
+            "Description": "The number of periods over which data is compared to the specified threshold.",
+            "Type": "String"
+        },
+        "ScaleDownPeriod": {
+            "Default": "60",
+            "Description": "The period in seconds over which the specified statistic is applied.",
+            "Type": "String"
+        },
+        "ScaleDownScalingAdjustment": {
+            "Default": "-1",
+            "Description": "The number of instances by which to scale.",
+            "Type": "String"
+        },
+        "ScaleDownStatistic": {
+            "Default": "Average",
+            "Description": "The statistic to apply to the alarm's associated metric.",
+            "Type": "String"
+        },
+        "ScaleDownThreshold": {
+            "Default": "30",
+            "Description": "The value against which the specified statistic is compared.",
+            "Type": "String"
+        },
+        "ScaleUpCooldown": {
+            "Default": "60",
+            "Description": "The amount of time, in seconds, after a scaling activity completes before any further trigger-related scaling activities can start.",
+            "Type": "String"
+        },
+        "ScaleUpEvaluationPeriods": {
+            "Default": "2",
+            "Description": "The number of periods over which data is compared to the specified threshold.",
+            "Type": "String"
+        },
+        "ScaleUpPeriod": {
+            "Default": "60",
+            "Description": "The period in seconds over which the specified statistic is applied.",
+            "Type": "String"
+        },
+        "ScaleUpScalingAdjustment": {
+            "Default": "1",
+            "Description": "The number of instances by which to scale.",
+            "Type": "String"
+        },
+        "ScaleUpStatistic": {
+            "Default": "Average",
+            "Description": "The statistic to apply to the alarm's associated metric.",
+            "Type": "String"
+        },
+        "ScaleUpThreshold": {
+            "Default": "70",
+            "Description": "The value against which the specified statistic is compared.",
+            "Type": "String"
+        },
+        "Subnet": {
+            "Type": "String"
+        },
+        "TagBusinessUnit": {
+            "Description": "Tag for Business Unit",
+            "Type": "String"
+        },
+        "TagCostCenter": {
+            "Description": "Tag for cost center ID",
+            "Type": "String"
+        },
+        "TagOwner": {
+            "Description": "Tag for Owner",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "AlarmHigh": {
+            "Properties": {
+                "AlarmActions": [
+                    {
+                        "Ref": "ScaleUpPolicy"
+                    }
+                ],
+                "AlarmDescription": "Autoscale Scale Up Alarm",
+                "ComparisonOperator": "GreaterThanThreshold",
+                "Dimensions": [
+                    {
+                        "Name": "AutoScalingGroupName",
+                        "Value": {
+                            "Ref": "AutoScaleGroup"
+                        }
+                    }
+                ],
+                "EvaluationPeriods": {
+                    "Ref": "ScaleUpEvaluationPeriods"
+                },
+                "MetricName": {
+                    "Ref": "MetricName"
+                },
+                "Namespace": "AWS/EC2",
+                "Period": {
+                    "Ref": "ScaleUpPeriod"
+                },
+                "Statistic": {
+                    "Ref": "ScaleUpStatistic"
+                },
+                "Threshold": {
+                    "Ref": "ScaleUpThreshold"
+                }
+            },
+            "Type": "AWS::CloudWatch::Alarm"
+        },
+        "AlarmLow": {
+            "Properties": {
+                "AlarmActions": [
+                    {
+                        "Ref": "ScaleDownPolicy"
+                    }
+                ],
+                "AlarmDescription": "Autoscale Scale Down Alarm",
+                "ComparisonOperator": "LessThanThreshold",
+                "Dimensions": [
+                    {
+                        "Name": "AutoScalingGroupName",
+                        "Value": {
+                            "Ref": "AutoScaleGroup"
+                        }
+                    }
+                ],
+                "EvaluationPeriods": {
+                    "Ref": "ScaleDownEvaluationPeriods"
+                },
+                "MetricName": {
+                    "Ref": "MetricName"
+                },
+                "Namespace": "AWS/EC2",
+                "Period": {
+                    "Ref": "ScaleUpPeriod"
+                },
+                "Statistic": {
+                    "Ref": "ScaleDownStatistic"
+                },
+                "Threshold": {
+                    "Ref": "ScaleDownThreshold"
+                }
+            },
+            "Type": "AWS::CloudWatch::Alarm"
+        },
+        "AutoScaleGroup": {
+            "Properties": {
+                "AvailabilityZones": {
+                    "Fn::GetAZs": ""
+                },
+                "HealthCheckGracePeriod": {
+                  "Ref": "ASGHealthCheckGracePeriod"
+                },
+                "LaunchConfigurationName": {
+                    "Ref": "LaunchConfig"
+                },
+                "LoadBalancerNames": [
+                    {
+                        "Ref": "ElasticLoadBalancer"
+                    }
+                ],
+                "MaxSize": {
+                    "Fn::FindInMap": [
+                        "ScaleCapacity",
+                        "MaxSize",
+                        {
+                            "Ref": "NetworkSecurityEnv"
+                        }
+                    ]
+                },
+                "MinSize": {
+                    "Fn::FindInMap": [
+                        "ScaleCapacity",
+                        "MinSize",
+                        {
+                            "Ref": "NetworkSecurityEnv"
+                        }
+                    ]
+                },
+                "NotificationConfiguration": {
+                    "NotificationTypes": [
+                        "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+                        "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"
+                    ],
+                    "TopicARN": {
+                        "Ref": "AlertARN"
+                    }
+                },
+                "Tags": [
+                    {
+                        "Key": "Name",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Fn::Join": [
+                                "",
+                                [
+                                    {
+                                        "Ref": "Application"
+                                    },
+									"-",
+                                    {
+                                        "Ref": "Product"
+                                    },
+                                    "-",
+                                    {
+                                        "Ref": "NetworkSecurityEnv"
+                                    },
+                                    "-",
+                                    {
+                                        "Ref": "Release"
+                                    }
+                                ]
+                            ]
+                        }
+                    },
+                    {
+                        "Key": "Bu",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "TagBusinessUnit"
+                        }
+                    },
+                    {
+                        "Key": "Cc",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "TagCostCenter"
+                        }
+                    },
+                    {
+                        "Key": "Environment",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "NetworkSecurityEnv"
+                        }
+                    },
+                    {
+                        "Key": "Owner",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "TagOwner"
+                        }
+                    },
+                    {
+                        "Key": "Product",
+                        "PropagateAtLaunch": true,
+                        "Value": {
+                            "Ref": "Product"
+                        }
+                    }
+                ],
+                "VPCZoneIdentifier": {
+                    "Fn::FindInMap": [
+                        "InstanceSubnet",
+                        {
+                            "Ref": "NetworkSecurityEnv"
+                        },
+                        {
+                            "Ref": "Subnet"
+                        }
+                    ]
+                }
+            },
+            "Type": "AWS::AutoScaling::AutoScalingGroup"
+        },
+        "DNSRecord": {
+            "Properties": {
+                "Comment": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            {
+                                "Ref": "Application"
+                            },
+                            "-",
+                            {
+                                "Ref": "Product"
+                            },
+                            "-",
+                            {
+                                "Ref": "NetworkSecurityEnv"
+                            },
+                            "-",
+                            {
+                                "Ref": "Release"
+                            },
+                            ".",
+                            {
+                                "Ref" : "HostedZone"
+                            },
+                            "."
+                        ]
+                    ]
+                },
+                "HostedZoneName": {
+                    "Fn::Join": [
+                        "",
+                        [
+                            {
+                                "Ref": "HostedZone"
+                            },
+                            "."
+                        ]
+                    ]
+                },
+                "Name": {
+                  "Fn::Join": [
+                      "",
+                      [
+                           {
+                               "Ref": "Application"
+                           },
+                           "-",
+                           {
+                               "Ref": "Product"
+                           },
+                           "-",
+                           {
+                               "Ref": "NetworkSecurityEnv"
+                           },
+                           "-",
+                           {
+                               "Ref": "Release"
+                           },
+                           ".",
+                           {
+                               "Ref" : "HostedZone"
+                           },
+                           "."
+                      ]
+                  ]
+                },
+                "ResourceRecords": [
+                    {
+                        "Fn::GetAtt": [
+                            "ElasticLoadBalancer",
+                            "DNSName"
+                        ]
+                    }
+                ],
+                "TTL": "60",
+                "Type": "CNAME"
+            },
+            "Type": "AWS::Route53::RecordSet"
+        },
+        "ElasticLoadBalancer": {
+            "Properties": {
+                "CrossZone": "true",
+                "HealthCheck": {
+                    "HealthyThreshold": {
+                        "Ref": "ELBHealthyThreshold"
+                    },
+                    "Interval": {
+                        "Ref": "ELBInterval"
+                    },
+                    "Target": {
+                        "Ref": "ELBTarget"
+                    },
+                    "Timeout": {
+                        "Ref": "ELBTimeout"
+                    },
+                    "UnhealthyThreshold": {
+                        "Ref": "ELBUnhealthyThreshold"
+                    }
+                },
+                "Listeners": [
+                    {
+                        "InstancePort": {
+                            "Ref": "ELBInstancePort"
+                        },
+                        "LoadBalancerPort": {
+                            "Ref": "ELBLoadBalancerPort"
+                        },
+                        "Protocol": {
+                            "Ref": "ELBProtocol"
+                        }
+                    }
+                ],
+                "SecurityGroups": {
+                    "Fn::FindInMap": [
+                        "ELBSecurityGroup",
+                        {
+                            "Ref": "NetworkSecurityEnv"
+                        },
+                        {
+                            "Ref": "Subnet"
+                        }
+                    ]
+                },
+                "Scheme": "internet-facing",
+                "Subnets": {
+                    "Fn::FindInMap": [
+                        "ELBSubnet",
+                        {
+                            "Ref": "NetworkSecurityEnv"
+                        },
+                        {
+                            "Ref": "Subnet"
+                        }
+                    ]
+                }
+            },
+            "Type": "AWS::ElasticLoadBalancing::LoadBalancer"
+        },
+        "InstanceProfile": {
+            "Properties": {
+                "Path": "/",
+                "Roles": [
+                    {
+                        "Ref": "InstanceRole"
+                    }
+                ]
+            },
+            "Type": "AWS::IAM::InstanceProfile"
+        },
+        "InstanceRole": {
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [
+                        {
+                            "Action": [
+                                "sts:AssumeRole"
+                            ],
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "ec2.amazonaws.com"
+                                ]
+                            }
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": []
+            },
+            "Type": "AWS::IAM::Role"
+        },
+        "LaunchConfig": {
+            "Properties": {
+                "AssociatePublicIpAddress" : "true",
+                "IamInstanceProfile": {
+                    "Ref": "InstanceProfile"
+                },
+                "ImageId": {
+                    "Ref": "ImageId"
+                },
+                "InstanceType": {
+                    "Fn::FindInMap": [
+                        "ResourceSize",
+                        "Instance",
+                        {
+                            "Ref": "NetworkSecurityEnv"
+                        }
+                    ]
+                },
+                "KeyName": {
+                    "Ref": "KeyName"
+                },
+                "SecurityGroups": {
+                    "Fn::FindInMap": [
+                        "InstanceSecurityGroup",
+                        {
+                            "Ref": "NetworkSecurityEnv"
+                        },
+                        {
+                            "Ref": "Subnet"
+                        }
+                    ]
+                },
+                "UserData": {
+                    "Fn::Base64": {
+                        "Fn::Join": [
+                            "",
+                            [
+                                "#!/bin/bash -ex\n",
+                                "echo \"export NetworkSecurityEnv=",
+                                {
+                                    "Ref": "NetworkSecurityEnv"
+                                },
+                                "\" >> /home/ec2-user/app/envvars\n",
+                                "echo \"export Release=",
+                                {
+                                    "Ref": "Release"
+                                },
+                                "\" >> /home/ec2-user/app/envvars\n",
+                                "chown -R ec2-user:ec2-user /home/ec2-user\n",
+                                "chmod +x /home/ec2-user/app/deploy/scripts/*.sh; /home/ec2-user/app/deploy/scripts/firstrun.sh\n",
+                                "$CFNDIR/cfn-signal -e 0\n"
+                            ]
+                        ]
+                    }
+                }
+            },
+            "Type": "AWS::AutoScaling::LaunchConfiguration"
+        },
+        "ScaleDownPolicy": {
+            "Properties": {
+                "AdjustmentType": "ChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "AutoScaleGroup"
+                },
+                "Cooldown": {
+                    "Ref": "ScaleDownCooldown"
+                },
+                "ScalingAdjustment": {
+                    "Ref": "ScaleDownScalingAdjustment"
+                }
+            },
+            "Type": "AWS::AutoScaling::ScalingPolicy"
+        },
+        "ScaleUpPolicy": {
+            "Properties": {
+                "AdjustmentType": "ChangeInCapacity",
+                "AutoScalingGroupName": {
+                    "Ref": "AutoScaleGroup"
+                },
+                "Cooldown": {
+                    "Ref": "ScaleUpCooldown"
+                },
+                "ScalingAdjustment": {
+                    "Ref": "ScaleUpScalingAdjustment"
+                }
+            },
+            "Type": "AWS::AutoScaling::ScalingPolicy"
+        }
+    }
+}
