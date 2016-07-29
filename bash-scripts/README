@@ -31,4 +31,6 @@ git-proxy: set/unset/show git proxy setting.
 
 find_elb_privat_ip: find the interface name and IP address of the elastic load balancer.
 
+sumologic/search.sh: Call Sumologic API to run search query.
+
 
