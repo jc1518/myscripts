@@ -50,7 +50,6 @@ def parse_build(meta):
                 if build.tag == 'planName':
                     build_info['planName'] = build.text
                 if build.tag == 'plan':
-                    print(build.attrib)
                     build_info['planLink'] = PREFIX_URL + build.attrib['key']
                     build_info['planName'] = build.text
                 if build.tag == 'buildResultKey':
