@@ -19,10 +19,10 @@ TODAY = datetime.datetime.today()
 
 
 # Download ics file
-def download_ics(username, password):
-    result = requests.get(ICS_URL, auth=(username, password), verify=False)
+def download_ics():
+    result = requests.get(ICS_URL, verify=False)
     if result.status_code == 200:
-        print('Login successfully! Downloading latest ics file.')
+        print('Downloading latest ics file.')
         with open('leave.ics', 'w') as f:
             f.write(result.text)
         return True
@@ -39,9 +39,7 @@ def parse_ics(ics):
 
 # Print Today's events
 def main():
-    username = os.environ['CONFL_USERNAME']
-    password = os.environ['CONFL_PASSWORD']
-    if download_ics(username, password):
+    if download_ics():
         for ev in parse_ics('leave.ics'):
             print(ev)
 
